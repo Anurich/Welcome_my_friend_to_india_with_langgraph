@@ -24,7 +24,7 @@ class AgentState(TypedDict):
     print: bool = True
 
 
-os.environ["OPENAI_API_KEY"] = ""
+# os.environ["OPENAI_API_KEY"] = ""
 
 llm = ChatOpenAI()
 duckduckgo_tool = DuckDuckGoSearchRun()
