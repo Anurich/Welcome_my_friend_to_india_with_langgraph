@@ -25,7 +25,6 @@ class AgentState(TypedDict):
 
 
 
-
 llm = ChatOpenAI()
 duckduckgo_tool = DuckDuckGoSearchRun()
 
