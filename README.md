@@ -3,4 +3,16 @@ My friends are visiting from Europe to India. Since we all studied together in t
 I believe this example will demonstrate how AI can be utilized for good. Hence, I plan to create a state-machine that encapsulates the essence of the entire trip for my friends. Although there's room for improvement, I believe the start isn't too shabby either.
 
 ## State Machine
-![State Machine of Travel](https://github.com/Anurich/Welcome_my_friend_to_india_with_langgraph/blob/main/Screenshot%202024-04-07%20at%207.38.39%E2%80%AFPM.png))
+![State Machine of Travel](https://github.com/Anurich/Welcome_my_friend_to_india_with_langgraph/blob/main/Screenshot%202024-04-07%20at%207.38.39%E2%80%AFPM.png)
+
+## Agent State
+```
+  # agent state 
+class AgentState(TypedDict):
+    messages: List[str]
+    history: List[str]
+    last_visited_city: List[str]
+    created_message: str
+    print: bool = True
+
+```
