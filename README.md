@@ -3,4 +3,4 @@ My friends are visiting from Europe to India. Since we all studied together in t
 I believe this example will demonstrate how AI can be utilized for good. Hence, I plan to create a state-machine that encapsulates the essence of the entire trip for my friends. Although there's room for improvement, I believe the start isn't too shabby either.
 
 ## State Machine
-![Let's start the trip](Screenshot 2024-04-07 at 7.38.39 PM.png)
+![alt text](Screenshot 2024-04-07 at 7.38.39 PM.png)
