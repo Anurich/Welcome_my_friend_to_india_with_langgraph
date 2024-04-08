@@ -17,6 +17,7 @@ from langgraph.prebuilt import ToolExecutor
 
 # agent state 
 class AgentState(TypedDict):
+    inputs: List[str] = []
     messages: List[str]
     history: List[str]
     last_visited_city: List[str]
@@ -81,7 +82,7 @@ cm_tool = StructuredTool.from_function(
     description="call this tool when ur \
                     1. Hungary: call this tool when someone express desired to eat something \
                     2. Tired: call this tool when someone is really tired and cannot perform any task \
-                    3. Explore: when person is ready to move around and see new places \
+                    3. Explore: when person is ready to move around and see new places, should be use for touristic exploration. \
                     4. Checkout: when someone wanted to leave the city or checkout from hotel \
                     5. end_trip: call this when the trip is finished or number of days for person to be in this country is over. \
                 "
@@ -91,8 +92,6 @@ tools = [cm_tool]
 model = ChatOpenAI(temperature=0, streaming=True)
 functions = [convert_to_openai_function(t) for t in tools]
 
-Prompt = "Your an agent and you need to seprate some important keywords, for example if the person talk about the tiredness, you need \
-     to create an argumen "
 model = model.bind_functions(functions)
 
 tool_executor = ToolExecutor(tools)
@@ -100,7 +99,7 @@ tool_executor = ToolExecutor(tools)
 
 def agent(state):
     if not any(state["last_visited_city"]):
-        entry_city = "new_delhi"
+        entry_city = "Rome"
         state["last_visited_city"].append(entry_city)
         state["print"] = True
     else:
@@ -108,15 +107,18 @@ def agent(state):
     if state["print"]:
         state["print"] =False
         print(f"Welcome to {entry_city} Enjoy your stay")
-    state["messages"][-1].content = input("Enter the question \t")
-    
+
+    question = input("Enter the question \t")
+    state["messages"][-1].content = question
+    state["inputs"].append(question)
+
     question = state["messages"][-1].content
     response = model.invoke(question)
     # history
     history = state["history"]
     history.append(response.content)
 
-    return {"messages": [response], "history": history, "last_visited_city": state["last_visited_city"]}
+    return {"inputs": state["inputs"],"messages": [response], "history": history, "last_visited_city": state["last_visited_city"]}
 
 
 def call_tools(state):
@@ -141,17 +143,19 @@ def call_tools(state):
     history = state["history"]
     history.append(response["messages"][-1])
     
-    return {"messages":[function_message], "history": history, "last_visited_city": state["last_visited_city"]}
+    return {"inputs": state["inputs"], "messages":[function_message], "history": history, "last_visited_city": state["last_visited_city"]}
 
 
 def where_to_go(state):
     last_message = state["messages"][-1]
-    
-    if  json.loads(last_message.additional_kwargs["function_call"]["arguments"])["state"] == "end_trip":
-        return "end"
-    elif "function_call" in last_message.additional_kwargs:
-        return "continue"
-    else:
+    try:
+        if  json.loads(last_message.additional_kwargs["function_call"]["arguments"])["state"] == "end_trip":
+            return "end"
+        elif "function_call" in last_message.additional_kwargs:
+            return "continue"
+        else:
+            return "main_agent"
+    except:
         return "main_agent"
 
 
@@ -174,25 +178,27 @@ workflow.add_conditional_edges("agent", where_to_go, {
 workflow.add_edge("call_tool", "agent")
 app = workflow.compile()
 
-inputs = {"messages": [HumanMessage(content="")], "history": [], "last_visited_city": []}
+inputs = {"inputs":[],"messages": [HumanMessage(content="")], "history": [], "last_visited_city": []}
 
 for output in app.stream(inputs):
     # stream() yields dictionaries with output keyed by node name
     for key, value in output.items():
         if "call_tool" in key:
             print(f"Output from node '{key}':")
-            print("---")        
+            print("---")
+            inputs = value["inputs"]
             messages = value["messages"][0].content
             history = value["history"]
             last_visited_city = value["last_visited_city"]
             responses = json.dumps({
+                "inputs": inputs,
                 "response": messages,
                 "history": history,
                 "visiting_city": last_visited_city
             }, indent=6)
 
             print(responses)
-            with open("/Users/apple/Downloads/Traveling_to_india/ExploreWithAgents.json", "a") as fp:
+            with open("/Users/apple/Downloads/Welcome_my_friend_to_india_with_langgraph/ExploreWithAgents.json", "a") as fp:
                 json.dump(json.loads(responses), fp, indent=6)
 
 
